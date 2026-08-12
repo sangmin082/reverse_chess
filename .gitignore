@@ -1,5 +1,7 @@
-node_modules/
-dist/
 DerivedData/
+build/
+xcuserdata/
+*.ipa
+*.xcarchive
 *.log
 .DS_Store

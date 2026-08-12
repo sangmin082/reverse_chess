@@ -9,7 +9,7 @@ require "base64"
 default_platform(:ios)
 
 BUNDLE_ID = "com.reversechess.game"
-XCODEPROJ = "ios/App/App.xcodeproj"
+XCODEPROJ = "ReverseChess.xcodeproj"
 
 platform :ios do
   desc "빌드 후 TestFlight 업로드"
@@ -73,7 +73,7 @@ platform :ios do
 
     build_app(
       project: XCODEPROJ,
-      scheme: "App",
+      scheme: "ReverseChess",
       configuration: "Release",
       export_method: "app-store",
       # 빌드 번호 = GitHub Actions 실행 번호 (업로드마다 자동 증가)
