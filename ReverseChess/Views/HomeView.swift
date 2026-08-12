@@ -2,134 +2,167 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var botLevel: BotLevel = .easy
+    @State private var showRules = false
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.backgroundGradient.ignoresSafeArea()
+                Theme.paper.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 24) {
-                        header
-                            .padding(.top, 36)
+                VStack(alignment: .leading, spacing: 0) {
+                    wordmark
+                        .padding(.top, 48)
 
-                        VStack(spacing: 16) {
-                            NavigationLink {
-                                TutorialView()
-                            } label: {
-                                modeCard(
-                                    icon: "graduationcap.fill",
-                                    title: "배우기",
-                                    subtitle: "미션을 풀며 규칙 익히기 · 6개 레슨"
-                                )
-                            }
+                    Spacer()
 
-                            VStack(spacing: 0) {
-                                NavigationLink {
-                                    GameScreen(mode: .vsBot(botLevel))
-                                } label: {
-                                    modeCardContent(
-                                        icon: "cpu.fill",
-                                        title: "컴퓨터 대전",
-                                        subtitle: "AI를 상대로 한 판"
-                                    )
-                                }
-                                Divider().padding(.horizontal, 18)
-                                Picker("난이도", selection: $botLevel) {
-                                    ForEach(BotLevel.allCases) { level in
-                                        Text(level.korean).tag(level)
-                                    }
-                                }
-                                .pickerStyle(.segmented)
-                                .padding(16)
-                            }
-                            .cardStyle()
+                    menu
 
-                            NavigationLink {
-                                GameScreen(mode: .twoPlayer)
-                            } label: {
-                                modeCard(
-                                    icon: "person.2.fill",
-                                    title: "함께 하기",
-                                    subtitle: "한 기기로 번갈아 두기"
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 20)
+                    Spacer()
 
-                        rulesFootnote
-                            .padding(.horizontal, 28)
-                            .padding(.bottom, 30)
+                    Button {
+                        showRules = true
+                    } label: {
+                        Text("규칙 한 장 보기")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.inkSoft)
+                            .underline()
                     }
+                    .padding(.bottom, 20)
                 }
+                .padding(.horizontal, 28)
             }
+            .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showRules) { rulesSheet }
         }
-        .tint(Theme.accent)
+        .tint(Theme.ink)
     }
 
-    private var header: some View {
-        VStack(spacing: 10) {
-            // 뒤집힌 왕관 — "정반대의 체스"를 상징하는 로고 마크
-            Image(systemName: "crown.fill")
-                .font(.system(size: 44, weight: .bold))
-                .foregroundStyle(Theme.accent)
+    // MARK: - 워드마크
+
+    private var wordmark: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // 뒤집힌 킹 — 패배가 곧 승리
+            Text("♚\u{FE0E}")
+                .font(.system(size: 56))
+                .foregroundStyle(Theme.ink)
                 .rotationEffect(.degrees(180))
-                .padding(20)
-                .background(Circle().fill(Theme.accentSoft))
 
             Text("리버스 체스")
-                .font(.system(size: 34, weight: .heavy, design: .rounded))
+                .font(.system(size: 42, weight: .black, design: .serif))
+                .foregroundStyle(Theme.ink)
 
-            Text("기물을 다 버리는 사람이 이깁니다")
-                .font(.system(.subheadline, design: .rounded))
-                .foregroundStyle(.secondary)
+            Text("지는 법을 아는 사람이 이깁니다")
+                .font(.system(.body, design: .serif))
+                .italic()
+                .foregroundStyle(Theme.inkSoft)
         }
     }
 
-    private func modeCard(icon: String, title: String, subtitle: String) -> some View {
-        modeCardContent(icon: icon, title: title, subtitle: subtitle)
-            .cardStyle()
+    // MARK: - 메뉴
+
+    private var menu: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            menuRow(title: "배우기", detail: "여섯 개의 미션으로 규칙 익히기") {
+                TutorialView()
+            }
+            menuRow(title: "컴퓨터 대전", detail: "혼자서 한 판") {
+                GameScreen(mode: .vsBot(botLevel))
+            }
+
+            // 난이도: 텍스트 토글
+            HStack(spacing: 20) {
+                ForEach(BotLevel.allCases) { level in
+                    Button {
+                        botLevel = level
+                    } label: {
+                        Text(level.korean)
+                            .font(.system(.subheadline, weight: botLevel == level ? .bold : .regular))
+                            .foregroundStyle(botLevel == level ? Theme.accent : Theme.inkSoft)
+                            .overlay(alignment: .bottom) {
+                                if botLevel == level {
+                                    Rectangle()
+                                        .fill(Theme.accent)
+                                        .frame(height: 2)
+                                        .offset(y: 4)
+                                }
+                            }
+                    }
+                }
+                Spacer()
+            }
+            .padding(.leading, 2)
+            .padding(.top, 2)
+            .padding(.bottom, 18)
+
+            menuRow(title: "함께 하기", detail: "한 기기로 번갈아 두기") {
+                GameScreen(mode: .twoPlayer)
+            }
+            Rectangle().fill(Theme.hairline).frame(height: 1)
+        }
     }
 
-    private func modeCardContent(icon: String, title: String, subtitle: String) -> some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 22, weight: .semibold))
+    private func menuRow<Destination: View>(
+        title: String, detail: String,
+        @ViewBuilder destination: @escaping () -> Destination
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Rectangle().fill(Theme.hairline).frame(height: 1)
+            NavigationLink {
+                destination()
+            } label: {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(title)
+                        .font(.system(size: 27, weight: .semibold, design: .serif))
+                        .foregroundStyle(Theme.ink)
+                    Spacer()
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(Theme.inkSoft)
+                }
+                .padding(.vertical, 18)
+                .contentShape(Rectangle())
+            }
+        }
+    }
+
+    // MARK: - 규칙 시트
+
+    private var rulesSheet: some View {
+        ZStack {
+            Theme.paper.ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 18) {
+                Text("규칙 한 장")
+                    .font(.system(.title2, design: .serif, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.top, 28)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    ruleLine("흑이 먼저 둡니다.")
+                    ruleLine("킹만 남기고 모든 기물을 잃으면 승리합니다.")
+                    ruleLine("잡을 수 있는 수가 있으면 반드시 잡아야 합니다. 단, 퀸의 캡처는 2칸 이내일 때만 강제입니다.")
+                    ruleLine("체크 규칙은 그대로— 체크 피하기가 강제 캡처보다 우선합니다.")
+                    ruleLine("체크메이트를 당한 쪽이 이깁니다.")
+                    ruleLine("체크가 아닌데 킹밖에 움직일 수 없다면, 그것도 승리입니다. (외딴 섬)")
+                    ruleLine("스테일메이트, 3회 동형, 50수는 무승부입니다.")
+                    ruleLine("프로모션은 있고, 캐슬링과 앙파상은 없습니다.")
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 28)
+        }
+        .presentationDetents([.large])
+    }
+
+    private func ruleLine(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text("—")
                 .foregroundStyle(Theme.accent)
-                .frame(width: 48, height: 48)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.accentSoft))
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(.headline, design: .rounded, weight: .bold))
-                    .foregroundStyle(.primary)
-                Text(subtitle)
-                    .font(.system(.footnote, design: .rounded))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.tertiary)
+                .font(.system(.body, weight: .bold))
+            Text(text)
+                .font(.system(.callout))
+                .foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(18)
-        .contentShape(Rectangle())
-    }
-
-    private var rulesFootnote: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("한눈에 보는 규칙")
-                .font(.system(.footnote, design: .rounded, weight: .bold))
-                .foregroundStyle(.secondary)
-            Group {
-                Text("· 흑이 먼저 두고, 킹만 남기면 승리")
-                Text("· 잡을 수 있으면 반드시 잡아야 함 (퀸은 2칸 이내만 강제)")
-                Text("· 체크 피하기가 강제 캡처보다 우선")
-                Text("· 체크메이트를 당해도, 외딴 섬이 되어도 승리")
-            }
-            .font(.system(.caption, design: .rounded))
-            .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
