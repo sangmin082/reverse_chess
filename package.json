@@ -1,0 +1,20 @@
+{
+  "name": "reverse-chess-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "리버스 체스 (https://reversechess.perfect.ai.kr) 의 iOS 앱 (Capacitor)",
+  "scripts": {
+    "sync:web": "node scripts/sync-web.mjs",
+    "sync:ios": "cap sync ios",
+    "open:ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0",
+    "sharp": "^0.34.0",
+    "typescript": "^5.0.0"
+  }
+}
