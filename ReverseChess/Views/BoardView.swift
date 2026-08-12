@@ -1,36 +1,37 @@
 import SwiftUI
 
 /// 체스판 렌더링 + 터치 입력.
-/// 표시 방향: 항상 백이 아래 (rank 1이 화면 아래쪽)
+/// 표시 방향: 흑이 아래 (플레이어 진영), 백이 위 — rank 8이 화면 아래쪽.
 struct BoardView: View {
     let board: Board
     let lastMove: Move?
     let selected: Square?
     let targets: Set<Square>
-    /// 강제 캡처 대상 칸 (코랄 링으로 표시)
+    /// 강제 캡처 대상 칸 (악센트 링으로 표시)
     let forcedTargets: Set<Square>
     let onTap: (Square) -> Void
 
     var body: some View {
         GeometryReader { geo in
             let size = geo.size.width / 8
-            ZStack(alignment: .bottomLeading) {
+            ZStack(alignment: .topLeading) {
                 ForEach(0..<64, id: \.self) { sq in
                     squareView(sq, size: size)
                         .frame(width: size, height: size)
                         .offset(
                             x: CGFloat(SquareUtil.file(sq)) * size,
-                            y: -CGFloat(SquareUtil.rank(sq)) * size
+                            // 흑이 아래: rank 7(흑 진영)이 y 최대 → 아래쪽
+                            y: CGFloat(SquareUtil.rank(sq)) * size
                         )
                 }
             }
-            .frame(width: geo.size.width, height: geo.size.width, alignment: .bottomLeading)
+            .frame(width: geo.size.width, height: geo.size.width, alignment: .topLeading)
         }
         .aspectRatio(1, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.black.opacity(0.12), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .strokeBorder(Theme.ink, lineWidth: 2)
         )
     }
 
@@ -48,32 +49,34 @@ struct BoardView: View {
                 Rectangle().fill(Theme.boardSelected)
             }
 
-            // 좌표 라벨 (a열과 1랭크 가장자리만)
-            if SquareUtil.file(sq) == 0 || SquareUtil.rank(sq) == 0 {
+            // 좌표 라벨: a열에 랭크 숫자, 화면 맨 아래 줄(rank 8)에 파일 문자
+            if SquareUtil.file(sq) == 0 || SquareUtil.rank(sq) == 7 {
                 coordinateLabel(sq, size: size, isDark: isDark)
             }
 
             if let piece = board[sq] {
                 Text(piece.glyph)
-                    .font(.system(size: size * 0.74))
+                    .font(.system(size: size * 0.76))
                     .foregroundStyle(piece.color == .white ? Theme.pieceWhite : Theme.pieceBlack)
-                    .shadow(color: .black.opacity(piece.color == .white ? 0.45 : 0.2), radius: 1, y: 1)
+                    .shadow(
+                        color: Theme.ink.opacity(piece.color == .white ? 0.55 : 0),
+                        radius: 0.8, y: 0.8
+                    )
                     .minimumScaleFactor(0.5)
             }
 
             if targets.contains(sq) {
                 if board[sq] != nil {
-                    // 캡처 타깃: 링
-                    Circle()
+                    // 캡처 타깃: 링 (강제 캡처는 악센트색)
+                    Rectangle()
                         .strokeBorder(
-                            forcedTargets.contains(sq) ? Theme.coral : Theme.accent,
-                            lineWidth: size * 0.08
+                            forcedTargets.contains(sq) ? Theme.accent : Theme.ink,
+                            lineWidth: size * 0.07
                         )
-                        .padding(size * 0.06)
                 } else {
                     Circle()
-                        .fill(Theme.accent.opacity(0.55))
-                        .frame(width: size * 0.3, height: size * 0.3)
+                        .fill(Theme.ink.opacity(0.4))
+                        .frame(width: size * 0.26, height: size * 0.26)
                 }
             }
         }
@@ -88,7 +91,7 @@ struct BoardView: View {
             HStack {
                 if SquareUtil.file(sq) == 0 {
                     Text("\(SquareUtil.rank(sq) + 1)")
-                        .font(.system(size: size * 0.2, weight: .semibold, design: .rounded))
+                        .font(.system(size: size * 0.2, weight: .semibold))
                         .foregroundStyle(color)
                         .padding(2)
                 }
@@ -97,9 +100,9 @@ struct BoardView: View {
             Spacer()
             HStack {
                 Spacer()
-                if SquareUtil.rank(sq) == 0 {
+                if SquareUtil.rank(sq) == 7 {
                     Text(files[SquareUtil.file(sq)])
-                        .font(.system(size: size * 0.2, weight: .semibold, design: .rounded))
+                        .font(.system(size: size * 0.2, weight: .semibold))
                         .foregroundStyle(color)
                         .padding(2)
                 }

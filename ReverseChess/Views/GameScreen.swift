@@ -144,9 +144,9 @@ struct GameScreen: View {
 
     var body: some View {
         ZStack {
-            Theme.backgroundGradient.ignoresSafeArea()
+            Theme.paper.ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
                 playerPanel(for: .white)
 
                 BoardView(
@@ -157,7 +157,7 @@ struct GameScreen: View {
                     forcedTargets: model.forcedTargets,
                     onTap: model.handleTap
                 )
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 14)
 
                 playerPanel(for: .black)
                 statusBanner
@@ -166,11 +166,13 @@ struct GameScreen: View {
             .padding(.top, 8)
 
             if model.game.isFinished {
+                Theme.ink.opacity(0.25).ignoresSafeArea()
                 resultOverlay
             }
         }
         .navigationTitle(model.mode.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Theme.paper, for: .navigationBar)
         .confirmationDialog(
             "프로모션 — 어떤 기물로 바꿀까요?",
             isPresented: Binding(
@@ -191,120 +193,96 @@ struct GameScreen: View {
         let isTurn = !model.game.isFinished && model.game.sideToMove == color
         let name: String = {
             switch model.mode {
-            case .vsBot: return color == model.humanColor ? "나 (흑)" : "컴퓨터 (백)"
-            case .twoPlayer: return color == .black ? "흑 플레이어" : "백 플레이어"
+            case .vsBot: return color == model.humanColor ? "나 · 흑" : "컴퓨터 · 백"
+            case .twoPlayer: return color == .black ? "흑" : "백"
             }
         }()
 
         return HStack(spacing: 10) {
-            Circle()
-                .fill(color == .white ? Theme.pieceWhite : Theme.pieceBlack)
-                .frame(width: 14, height: 14)
-                .overlay(Circle().strokeBorder(.black.opacity(0.2)))
+            Text(color == .white ? "♚\u{FE0E}" : "♚\u{FE0E}")
+                .font(.system(size: 17))
+                .foregroundStyle(color == .white ? Theme.pieceWhite : Theme.ink)
+                .shadow(color: color == .white ? Theme.ink.opacity(0.6) : .clear, radius: 0.6, y: 0.6)
+
             Text(name)
-                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                .font(.system(.subheadline, design: .serif, weight: .bold))
+                .foregroundStyle(Theme.ink)
+
             if isTurn {
                 if model.isBotThinking {
-                    ProgressView().scaleEffect(0.7)
+                    Text("생각 중…")
+                        .font(.caption)
+                        .foregroundStyle(Theme.inkSoft)
                 } else {
-                    Text("차례")
-                        .font(.system(.caption2, design: .rounded, weight: .bold))
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(Capsule().fill(Theme.accentSoft))
-                        .foregroundStyle(Theme.accent)
+                    Circle().fill(Theme.accent).frame(width: 7, height: 7)
                 }
             }
             Spacer()
 
             // 리버스 진행도: 기물을 잃을수록 승리에 가까워진다
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: 3) {
                 Text("남은 기물 \(model.game.board.nonKingCount(of: color))")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.inkSoft)
                 ProgressView(value: model.reverseProgress(for: color))
                     .tint(Theme.accent)
-                    .frame(width: 90)
+                    .frame(width: 84)
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 22)
     }
 
     private var statusBanner: some View {
         Group {
             if model.game.isInCheck && !model.game.isFinished {
-                bannerLabel("체크! 반드시 피해야 해요", icon: "exclamationmark.triangle.fill", color: Theme.coral)
+                bannerLabel("체크 — 반드시 피해야 합니다")
             } else if model.game.hasForcedCapture && !model.game.isFinished {
-                bannerLabel("강제 캡처 — 잡을 수 있으면 잡아야 해요", icon: "target", color: Theme.coral)
+                bannerLabel("강제 캡처 — 잡을 수 있으면 잡아야 합니다")
             }
         }
         .animation(.easeInOut(duration: 0.2), value: model.game.moveCount)
     }
 
-    private func bannerLabel(_ text: String, icon: String, color: Color) -> some View {
-        Label(text, systemImage: icon)
-            .font(.system(.footnote, design: .rounded, weight: .semibold))
-            .foregroundStyle(color)
-            .padding(.horizontal, 14).padding(.vertical, 8)
-            .background(Capsule().fill(color.opacity(0.12)))
+    private func bannerLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(.footnote, weight: .semibold))
+            .foregroundStyle(Theme.accent)
+            .padding(.top, 2)
     }
 
     private var resultOverlay: some View {
-        VStack(spacing: 18) {
-            Text(resultEmoji)
-                .font(.system(size: 56))
+        VStack(alignment: .leading, spacing: 14) {
             Text(resultTitle)
-                .font(.system(.title2, design: .rounded, weight: .bold))
+                .font(.system(size: 34, weight: .black, design: .serif))
+                .foregroundStyle(Theme.ink)
+            Rectangle().fill(Theme.accent).frame(width: 44, height: 3)
             Text(resultDetail)
-                .font(.system(.subheadline, design: .rounded))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+                .font(.system(.subheadline))
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: 12) {
-                Button {
-                    model.restart()
-                } label: {
-                    Label("한 판 더", systemImage: "arrow.counterclockwise")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
-
-                Button {
-                    dismiss()
-                } label: {
-                    Label("홈으로", systemImage: "house")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+            HStack(spacing: 10) {
+                Button("한 판 더") { model.restart() }
+                    .buttonStyle(InkButtonStyle(filled: true))
+                Button("홈으로") { dismiss() }
+                    .buttonStyle(InkButtonStyle())
             }
-            .padding(.horizontal, 8)
+            .padding(.top, 8)
         }
-        .padding(28)
-        .frame(maxWidth: 320)
-        .cardStyle()
+        .padding(26)
+        .frame(maxWidth: 330, alignment: .leading)
+        .panelStyle()
         .padding(24)
         .transition(.scale.combined(with: .opacity))
-    }
-
-    private var resultEmoji: String {
-        switch model.game.result {
-        case .win(let winner, _):
-            if model.botLevel != nil {
-                return winner == model.humanColor ? "🎉" : "😢"
-            }
-            return "🏆"
-        case .draw: return "🤝"
-        case nil: return ""
-        }
     }
 
     private var resultTitle: String {
         switch model.game.result {
         case .win(let winner, _):
             if model.botLevel != nil {
-                return winner == model.humanColor ? "승리!" : "패배..."
+                return winner == model.humanColor ? "승리" : "패배"
             }
-            return "\(winner.korean) 승리!"
+            return "\(winner.korean)의 승리"
         case .draw: return "무승부"
         case nil: return ""
         }
@@ -312,13 +290,19 @@ struct GameScreen: View {
 
     private var resultDetail: String {
         switch model.game.result {
-        case .win(_, let reason):
+        case .win(let winner, let reason):
+            let subject: String = {
+                if model.botLevel != nil {
+                    return winner == model.humanColor ? "내가" : "컴퓨터가"
+                }
+                return "\(winner.korean)이"
+            }()
             switch reason {
-            case .onlyKingLeft: return "킹만 남기고 모든 기물을 버리는 데 성공했어요."
-            case .checkmated: return "체크메이트에 몰린 쪽이 승리하는 게임! 훌륭해요."
-            case .loneIsland: return "외딴 섬 — 킹 말고는 움직일 기물이 없어서 승리!"
+            case .onlyKingLeft: return "\(subject) 킹만 남기고 모든 기물을 버렸습니다."
+            case .checkmated: return "\(subject) 체크메이트에 몰렸습니다. 이 게임에서는 그게 승리입니다."
+            case .loneIsland: return "외딴 섬 — \(subject) 킹 말고는 움직일 기물이 없습니다."
             }
-        case .draw(let reason): return reason.korean + "으로 무승부입니다."
+        case .draw(let reason): return "\(reason.korean)에 의한 무승부입니다."
         case nil: return ""
         }
     }

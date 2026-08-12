@@ -114,11 +114,12 @@ final class TutorialViewModel: ObservableObject {
     @Published var lessonIndex = 0
     @Published var game: Game
     @Published var selected: Square?
-    @Published var phase: Phase = .intro
+    @Published var phase: Phase = .concept
     @Published var showHint = false
 
     enum Phase {
-        case intro        // 레슨 소개 카드
+        case concept      // 리버스 체스란? (최초 1회)
+        case intro        // 레슨 소개
         case playing      // 미션 수행 중
         case wrong        // 오답 → 다시
         case success      // 통과
@@ -224,10 +225,10 @@ struct TutorialView: View {
 
     var body: some View {
         ZStack {
-            Theme.backgroundGradient.ignoresSafeArea()
+            Theme.paper.ignoresSafeArea()
 
-            VStack(spacing: 14) {
-                progressDots
+            VStack(spacing: 12) {
+                progressBar
 
                 BoardView(
                     board: model.game.board,
@@ -237,138 +238,177 @@ struct TutorialView: View {
                     forcedTargets: model.forcedTargets,
                     onTap: model.handleTap
                 )
-                .padding(.horizontal, 12)
-                .opacity(model.phase == .intro || model.phase == .finished ? 0.35 : 1)
+                .padding(.horizontal, 14)
+                .opacity(dimmedPhases ? 0.3 : 1)
 
                 missionPanel
                 Spacer(minLength: 0)
             }
             .padding(.top, 8)
 
+            if model.phase == .concept { conceptCard }
             if model.phase == .intro { introCard }
             if model.phase == .finished { finishedCard }
         }
         .navigationTitle("배우기")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Theme.paper, for: .navigationBar)
     }
 
-    private var progressDots: some View {
-        HStack(spacing: 8) {
+    private var dimmedPhases: Bool {
+        model.phase == .concept || model.phase == .intro || model.phase == .finished
+    }
+
+    private var progressBar: some View {
+        HStack(spacing: 6) {
             ForEach(TutorialLesson.all) { lesson in
-                Circle()
-                    .fill(lesson.id <= model.lessonIndex ? Theme.accent : Color(.systemGray4))
-                    .frame(width: 8, height: 8)
+                Rectangle()
+                    .fill(lesson.id <= model.lessonIndex && model.phase != .concept
+                          ? Theme.accent : Theme.hairline)
+                    .frame(height: 3)
             }
         }
+        .padding(.horizontal, 22)
     }
 
     @ViewBuilder
     private var missionPanel: some View {
         if model.phase == .playing || model.phase == .wrong || model.phase == .success {
             VStack(alignment: .leading, spacing: 10) {
-                HStack {
+                HStack(alignment: .firstTextBaseline) {
                     Text(model.lesson.title)
-                        .font(.system(.headline, design: .rounded, weight: .bold))
+                        .font(.system(.headline, design: .serif, weight: .bold))
+                        .foregroundStyle(Theme.ink)
                     Spacer()
-                    if model.phase == .playing || model.phase == .wrong {
+                    if model.phase != .success {
                         Button {
                             model.showHint.toggle()
                         } label: {
-                            Label("힌트", systemImage: "lightbulb")
-                                .font(.system(.caption, design: .rounded, weight: .semibold))
+                            Text("힌트")
+                                .font(.system(.caption, weight: .semibold))
+                                .foregroundStyle(Theme.inkSoft)
+                                .underline()
                         }
-                        .buttonStyle(.bordered)
-                        .tint(Theme.accent)
                     }
                 }
 
                 switch model.phase {
                 case .wrong:
-                    Label("그 수가 아니에요. 다시 해보세요!", systemImage: "arrow.uturn.backward")
-                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                        .foregroundStyle(Theme.coral)
+                    Text("그 수가 아닙니다. 다시 해보세요.")
+                        .font(.system(.subheadline, weight: .semibold))
+                        .foregroundStyle(Theme.accent)
                 case .success:
-                    Label("정답! 훌륭해요.", systemImage: "checkmark.circle.fill")
-                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.green)
+                    Text("정답입니다.")
+                        .font(.system(.subheadline, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
                 default:
                     Text(model.lesson.goal)
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.ink)
                 }
 
                 if model.showHint && model.phase != .success {
-                    Text("💡 " + model.lesson.hint)
-                        .font(.system(.footnote, design: .rounded))
-                        .foregroundStyle(.secondary)
+                    Text(model.lesson.hint)
+                        .font(.footnote)
+                        .foregroundStyle(Theme.inkSoft)
                 }
 
                 if model.phase == .success {
-                    Button {
+                    Button(model.lessonIndex + 1 < TutorialLesson.all.count ? "다음 레슨" : "완료") {
                         model.next()
-                    } label: {
-                        Text(model.lessonIndex + 1 < TutorialLesson.all.count ? "다음 레슨" : "완료")
-                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.accent)
+                    .buttonStyle(InkButtonStyle(filled: true))
                 }
             }
             .padding(18)
-            .cardStyle()
+            .panelStyle()
             .padding(.horizontal, 16)
         }
     }
 
+    // MARK: - 카드
+
+    private var conceptCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("리버스 체스란?")
+                .font(.system(size: 28, weight: .black, design: .serif))
+                .foregroundStyle(Theme.ink)
+            Rectangle().fill(Theme.accent).frame(width: 44, height: 3)
+
+            Text("모든 것이 거꾸로인 체스입니다. 기물은 지키는 게 아니라 버리는 것이고, 체크메이트는 당하는 쪽이 이깁니다.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 8) {
+                conceptLine("킹만 남기면 승리")
+                conceptLine("체크메이트를 당해도 승리")
+                conceptLine("체크가 아닌데 킹밖에 못 움직여도 승리 — 외딴 섬")
+            }
+
+            Text("여섯 개의 미션으로 차근차근 배워봅시다.")
+                .font(.footnote)
+                .foregroundStyle(Theme.inkSoft)
+
+            Button("시작") { model.phase = .intro }
+                .buttonStyle(InkButtonStyle(filled: true))
+                .padding(.top, 4)
+        }
+        .padding(24)
+        .frame(maxWidth: 340, alignment: .leading)
+        .panelStyle()
+        .padding(24)
+    }
+
+    private func conceptLine(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("—").foregroundStyle(Theme.accent).fontWeight(.bold)
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var introCard: some View {
-        VStack(spacing: 16) {
-            Text("레슨 \(model.lessonIndex + 1)")
-                .font(.system(.caption, design: .rounded, weight: .bold))
+        VStack(alignment: .leading, spacing: 12) {
+            Text("레슨 \(model.lessonIndex + 1) / \(TutorialLesson.all.count)")
+                .font(.system(.caption, weight: .bold))
                 .foregroundStyle(Theme.accent)
             Text(model.lesson.title)
-                .font(.system(.title2, design: .rounded, weight: .bold))
+                .font(.system(.title2, design: .serif, weight: .bold))
+                .foregroundStyle(Theme.ink)
             Text(model.lesson.story)
-                .font(.system(.subheadline, design: .rounded))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+                .font(.subheadline)
+                .foregroundStyle(Theme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
-            Button {
-                model.startLesson()
-            } label: {
-                Text("미션 시작")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
+            Button("미션 시작") { model.startLesson() }
+                .buttonStyle(InkButtonStyle(filled: true))
+                .padding(.top, 4)
         }
-        .padding(26)
-        .frame(maxWidth: 330)
-        .cardStyle()
+        .padding(24)
+        .frame(maxWidth: 340, alignment: .leading)
+        .panelStyle()
         .padding(24)
     }
 
     private var finishedCard: some View {
-        VStack(spacing: 16) {
-            Text("🎓")
-                .font(.system(size: 54))
-            Text("모든 레슨 완료!")
-                .font(.system(.title2, design: .rounded, weight: .bold))
-            Text("이기는 방법은 세 가지예요.\n① 킹만 남기기 ② 체크메이트 당하기 ③ 외딴 섬(체크가 아닌데 킹만 움직일 수 있는 상태) 만들기.\n이제 실전에서 만나요!")
-                .font(.system(.subheadline, design: .rounded))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        VStack(alignment: .leading, spacing: 12) {
+            Text("수료")
+                .font(.system(size: 28, weight: .black, design: .serif))
+                .foregroundStyle(Theme.ink)
+            Rectangle().fill(Theme.accent).frame(width: 44, height: 3)
+            Text("리버스 체스의 모든 규칙을 배웠습니다. 이제 실전에서 마음껏 져보세요 — 그게 이기는 길입니다.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
-            Button {
-                dismiss()
-            } label: {
-                Text("홈으로")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
+            Button("홈으로") { dismiss() }
+                .buttonStyle(InkButtonStyle(filled: true))
+                .padding(.top, 4)
         }
-        .padding(26)
-        .frame(maxWidth: 330)
-        .cardStyle()
+        .padding(24)
+        .frame(maxWidth: 340, alignment: .leading)
+        .panelStyle()
         .padding(24)
     }
 }

@@ -39,21 +39,19 @@ struct Piece: Hashable, Codable {
     let color: PieceColor
     let kind: PieceKind
 
+    /// 두 색 모두 "채워진" 글리프를 쓰고 색으로만 구분한다.
+    /// U+FE0E(텍스트 변형 선택자)를 붙여 iOS가 ♟ 등을 이모지로 렌더링하는 것을 막는다.
     var glyph: String {
-        switch (color, kind) {
-        case (.white, .king): return "♔"
-        case (.white, .queen): return "♕"
-        case (.white, .rook): return "♖"
-        case (.white, .bishop): return "♗"
-        case (.white, .knight): return "♘"
-        case (.white, .pawn): return "♙"
-        case (.black, .king): return "♚"
-        case (.black, .queen): return "♛"
-        case (.black, .rook): return "♜"
-        case (.black, .bishop): return "♝"
-        case (.black, .knight): return "♞"
-        case (.black, .pawn): return "♟"
+        let base: String
+        switch kind {
+        case .king: base = "♚"
+        case .queen: base = "♛"
+        case .rook: base = "♜"
+        case .bishop: base = "♝"
+        case .knight: base = "♞"
+        case .pawn: base = "♟"
         }
+        return base + "\u{FE0E}"
     }
 }
 
