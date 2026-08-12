@@ -3,6 +3,10 @@
 > 대상: https://reversechess.perfect.ai.kr 의 iOS App Store 버전
 > 작성일: 2026-08-12
 
+> **진행 상황 (2026-08-12):** Phase 1 완료 — Capacitor iOS 프로젝트 구성,
+> 웹 자산 로컬 번들(GA 제거·폰트 오프라인화), 앱 아이콘/스플래시,
+> GitHub Actions 빌드/TestFlight 파이프라인까지 구현됨. 자세한 사용법은 [README](./README.md) 참고.
+
 ## 1. 현재 상태 분석
 
 웹 버전을 분석한 결과:
