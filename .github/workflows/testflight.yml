@@ -5,12 +5,10 @@ on:
   push:
     branches: [main] # main에 푸시(머지)될 때마다 TestFlight에 새 빌드 업로드
     paths: # 앱 관련 파일이 바뀔 때만
-      - "www/**"
-      - "ios/**"
+      - "ReverseChess/**"
+      - "ReverseChess.xcodeproj/**"
       - "fastlane/**"
       - "Gemfile*"
-      - "package*.json"
-      - "capacitor.config.ts"
       - ".github/workflows/testflight.yml"
 
 jobs:
@@ -24,17 +22,6 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: "latest-stable"
-
-      - name: Node 설정
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: 웹 자산 → iOS 프로젝트 동기화
-        run: |
-          npm ci
-          npx cap sync ios
 
       - name: Ruby 설정
         uses: ruby/setup-ruby@v1
