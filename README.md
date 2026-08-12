@@ -39,53 +39,46 @@ npm run open:ios   # Xcode에서 열기 → 시뮬레이터/실기기 실행
 
 ## CI (GitHub Actions)
 
-`.github/workflows/ios.yml`:
+- `.github/workflows/ios.yml` — **push / PR** 시 macOS 러너에서 서명 없이 컴파일 검증 (Apple 계정 불필요)
+- `.github/workflows/testflight.yml` — **수동 실행 또는 main 푸시** 시 서명 후 TestFlight 업로드
 
-- **push / PR** → macOS 러너에서 서명 없이 컴파일 검증 (Apple 계정 불필요)
-- **수동 실행 (workflow_dispatch) + `testflight` 체크** → 서명 후 TestFlight 업로드
+## TestFlight 배포 (Mac 불필요 — feast_of_memory와 동일 구성)
 
-TestFlight 업로드에 필요한 레포 시크릿:
+인증서/프로비저닝 프로파일은 [fastlane match](https://docs.fastlane.tools/actions/match/)가
+CI에서 자동 생성해 별도 private repo에 보관하므로 Mac이 전혀 필요 없다.
+시크릿 이름·형식이 [feast_of_memory](https://github.com/sangmin082/feast_of_memory)와 동일하므로,
+거기서 쓰던 값을 **그대로 복사해 등록하면 된다** (인증서 repo도 공유 가능 —
+match가 `com.reversechess.game`용 프로파일을 같은 repo에 추가로 만들어 관리한다).
 
-| 시크릿 | 내용 |
+### 사전 준비 (1회)
+
+1. **Apple Developer Program 가입** — [developer.apple.com](https://developer.apple.com) (연 $99)
+2. **번들 ID 등록** — Certificates, Identifiers & Profiles → Identifiers → `+` → App IDs → `com.reversechess.game`
+3. **App Store Connect에 앱 생성** — [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → 나의 앱 → `+` → 위 번들 ID 선택
+4. 아래 시크릿 재료가 없다면 (feast_of_memory에서 이미 만들었다면 재사용):
+   - **App Store Connect API 키** — Users and Access → Integrations → App Store Connect API → Team Keys → `+` (Role: **App Manager**) → Issuer ID·Key ID 기록, `.p8` 다운로드(단 한 번만 가능!)
+   - **Team ID** — developer.apple.com → Membership 페이지
+   - **인증서 보관용 private repo** — 예: `ios-certificates` (빈 저장소)
+   - **GitHub PAT** — Settings → Developer settings → Personal access tokens (classic) → `repo` 권한
+
+### GitHub Secrets 등록
+
+이 저장소 → Settings → Secrets and variables → Actions → New repository secret:
+
+| Secret | 값 |
 |---|---|
-| `APPLE_TEAM_ID` | Apple Developer 팀 ID |
-| `BUILD_CERTIFICATE_BASE64` | Apple Distribution 인증서(.p12)의 base64 |
-| `P12_PASSWORD` | .p12 비밀번호 |
-| `APPSTORE_API_KEY_ID` | App Store Connect API 키 ID |
-| `APPSTORE_API_ISSUER_ID` | App Store Connect API Issuer ID |
-| `APPSTORE_API_PRIVATE_KEY` | API 개인 키(.p8) 파일 내용 전체 |
+| `APP_STORE_CONNECT_KEY_ID` | API 키의 Key ID |
+| `APP_STORE_CONNECT_ISSUER_ID` | API 키의 Issuer ID |
+| `APP_STORE_CONNECT_KEY` | `.p8` 파일을 **base64 인코딩**한 문자열 (`base64 -w0 AuthKey_XXX.p8`) |
+| `APPLE_TEAM_ID` | Team ID (예: `AB12CD34EF`) |
+| `MATCH_GIT_URL` | 인증서 repo 주소 (`https://github.com/<계정>/ios-certificates.git`) |
+| `MATCH_GIT_BASIC_AUTHORIZATION` | `echo -n "<깃허브계정>:<PAT>" \| base64 -w0` 결과 |
+| `MATCH_PASSWORD` | 인증서 암호화용 비밀번호 (feast_of_memory와 같은 값 사용) |
 
-사전 준비 (1회):
+### 실행
 
-1. [Apple Developer Program](https://developer.apple.com/programs/) 가입 ($99/년)
-2. App Store Connect에서 앱 등록 (Bundle ID `com.reversechess.game`)
-3. 인증서/API 키 발급 후 위 시크릿 등록
-4. Actions 탭 → iOS → Run workflow → `testflight` 체크 → 실행
+Actions 탭 → **TestFlight** → Run workflow. 성공하면 10~30분 뒤 App Store Connect →
+TestFlight 탭에 빌드가 나타난다. 내부 테스팅 그룹에 본인을 추가하고 iPhone의
+**TestFlight 앱**에서 설치할 것.
 
-### Mac 없이 Distribution 인증서(.p12) 만들기
-
-인증서 발급은 보통 키체인(Mac)으로 하지만, OpenSSL만 있으면 어디서든 가능하다
-(Linux, WSL, Git Bash 등):
-
-```bash
-# 1. 개인 키 + CSR(인증서 서명 요청) 생성
-openssl genrsa -out dist.key 2048
-openssl req -new -key dist.key -out dist.csr \
-  -subj "/emailAddress=본인이메일/CN=본인이름/C=KR"
-
-# 2. https://developer.apple.com/account/resources/certificates 에서
-#    Certificates → + → "Apple Distribution" 선택 → dist.csr 업로드
-#    → distribution.cer 다운로드
-
-# 3. .cer + 개인 키 → .p12 로 합치기 (비밀번호를 정하고 P12_PASSWORD 시크릿에 등록)
-openssl x509 -inform DER -in distribution.cer -out distribution.pem
-openssl pkcs12 -export -legacy \
-  -inkey dist.key -in distribution.pem -out certificate.p12
-# openssl 1.x 등에서 -legacy 옵션이 없다는 에러가 나면 -legacy를 빼고 실행
-
-# 4. BUILD_CERTIFICATE_BASE64 시크릿에 넣을 값 생성
-base64 -w0 certificate.p12   # macOS라면: base64 -i certificate.p12
-```
-
-`dist.key`와 `certificate.p12`는 유출되면 앱 서명을 도용당할 수 있으니
-시크릿 등록 후 안전한 곳에 보관하거나 삭제할 것.
+> 💡 public repo는 GitHub Actions 무료 무제한. private으로 바꾸면 macOS 러너는 분당 과금 배율이 10배라 무료 한도(월 2,000분)로 매달 약 15~20회 빌드 가능.
