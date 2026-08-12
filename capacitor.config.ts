@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'kr.ai.perfect.reversechess',
+  appId: 'com.reversechess.game',
   appName: '리버스 체스',
   webDir: 'www',
   ios: {

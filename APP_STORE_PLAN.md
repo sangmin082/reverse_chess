@@ -53,7 +53,7 @@
 1. 소스 레포에 Capacitor 추가
    ```bash
    npm install @capacitor/core @capacitor/cli
-   npx cap init "리버스 체스" kr.ai.perfect.reversechess --web-dir=dist
+   npx cap init "리버스 체스" com.reversechess.game --web-dir=dist
    npm install @capacitor/ios
    npm run build && npx cap add ios && npx cap sync
    ```
@@ -94,7 +94,7 @@
 
 ### Phase 4 — 빌드 & 제출 (1주, 심사 대기 포함)
 
-1. App Store Connect에서 앱 등록 (Bundle ID: `kr.ai.perfect.reversechess`)
+1. App Store Connect에서 앱 등록 (Bundle ID: `com.reversechess.game`)
 2. Xcode Archive → **TestFlight 내부 테스트** 배포, 실기기 QA
 3. 문제 없으면 심사 제출
 4. 심사 소요: 통상 24~48시간 (리젝 시 수정 후 재제출 왕복 감안해 1주 버퍼)

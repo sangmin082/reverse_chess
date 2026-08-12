@@ -3,7 +3,7 @@
 [리버스 체스 웹 버전](https://reversechess.perfect.ai.kr)의 App Store 배포용 Capacitor 프로젝트.
 
 - 출시 플랜: [APP_STORE_PLAN.md](./APP_STORE_PLAN.md)
-- Bundle ID: `kr.ai.perfect.reversechess`
+- Bundle ID: `com.reversechess.game`
 
 ## 구조
 
@@ -58,6 +58,34 @@ TestFlight 업로드에 필요한 레포 시크릿:
 사전 준비 (1회):
 
 1. [Apple Developer Program](https://developer.apple.com/programs/) 가입 ($99/년)
-2. App Store Connect에서 앱 등록 (Bundle ID `kr.ai.perfect.reversechess`)
+2. App Store Connect에서 앱 등록 (Bundle ID `com.reversechess.game`)
 3. 인증서/API 키 발급 후 위 시크릿 등록
 4. Actions 탭 → iOS → Run workflow → `testflight` 체크 → 실행
+
+### Mac 없이 Distribution 인증서(.p12) 만들기
+
+인증서 발급은 보통 키체인(Mac)으로 하지만, OpenSSL만 있으면 어디서든 가능하다
+(Linux, WSL, Git Bash 등):
+
+```bash
+# 1. 개인 키 + CSR(인증서 서명 요청) 생성
+openssl genrsa -out dist.key 2048
+openssl req -new -key dist.key -out dist.csr \
+  -subj "/emailAddress=본인이메일/CN=본인이름/C=KR"
+
+# 2. https://developer.apple.com/account/resources/certificates 에서
+#    Certificates → + → "Apple Distribution" 선택 → dist.csr 업로드
+#    → distribution.cer 다운로드
+
+# 3. .cer + 개인 키 → .p12 로 합치기 (비밀번호를 정하고 P12_PASSWORD 시크릿에 등록)
+openssl x509 -inform DER -in distribution.cer -out distribution.pem
+openssl pkcs12 -export -legacy \
+  -inkey dist.key -in distribution.pem -out certificate.p12
+# openssl 1.x 등에서 -legacy 옵션이 없다는 에러가 나면 -legacy를 빼고 실행
+
+# 4. BUILD_CERTIFICATE_BASE64 시크릿에 넣을 값 생성
+base64 -w0 certificate.p12   # macOS라면: base64 -i certificate.p12
+```
+
+`dist.key`와 `certificate.p12`는 유출되면 앱 서명을 도용당할 수 있으니
+시크릿 등록 후 안전한 곳에 보관하거나 삭제할 것.
