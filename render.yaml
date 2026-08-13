@@ -1,0 +1,12 @@
+# Render.com 배포 설정 — 2인용 온라인 대전 릴레이 서버
+# 사용법: render.com → New → Blueprint → 이 저장소 연결 → 배포
+# 배포되면 wss://reverse-chess-server.onrender.com 주소로 접속 가능
+# (서비스 이름을 바꾸면 ReverseChess/Online/OnlineConfig.swift 의 주소도 함께 수정)
+services:
+  - type: web
+    name: reverse-chess-server
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js

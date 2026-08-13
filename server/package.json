@@ -1,0 +1,13 @@
+{
+  "name": "reverse-chess-server",
+  "version": "1.0.0",
+  "description": "리버스 체스 2인용 온라인 대전 릴레이 서버",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
