@@ -97,6 +97,9 @@ struct HomeView: View {
             menuRow(title: "함께 하기", detail: "한 기기로 번갈아 두기") {
                 GameScreen(mode: .twoPlayer)
             }
+            menuRow(title: "온라인 대전", detail: "방코드로 친구와 대결") {
+                OnlineScreen()
+            }
             Rectangle().fill(Theme.hairline).frame(height: 1)
         }
     }

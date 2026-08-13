@@ -3,11 +3,14 @@ import SwiftUI
 enum GameMode: Hashable {
     case vsBot(BotLevel)
     case twoPlayer
+    /// 온라인 대전 — 연관값은 내가 둘 색 (서버가 배정)
+    case online(PieceColor)
 
     var title: String {
         switch self {
         case .vsBot(let level): return "컴퓨터 대전 · \(level.korean)"
         case .twoPlayer: return "함께 하기"
+        case .online: return "온라인 대전"
         }
     }
 }
@@ -18,13 +21,27 @@ final class GameViewModel: ObservableObject {
     @Published var selected: Square?
     @Published var pendingPromotion: (from: Square, to: Square)?
     @Published var isBotThinking = false
+    @Published var opponentLeft = false
 
     let mode: GameMode
-    /// vsBot 모드에서 사람이 조종하는 색 (흑 선공이므로 사람이 흑)
-    let humanColor: PieceColor = .black
+    /// 사람이 조종하는 색 — vsBot은 흑(선공), 온라인은 서버 배정
+    let humanColor: PieceColor
+    private let client: RoomClient?
 
-    init(mode: GameMode) {
+    init(mode: GameMode, client: RoomClient? = nil) {
         self.mode = mode
+        self.client = client
+        if case .online(let color) = mode {
+            self.humanColor = color
+        } else {
+            self.humanColor = .black
+        }
+        client?.onRemoteMove = { [weak self] move in
+            self?.applyRemote(move)
+        }
+        client?.onOpponentLeft = { [weak self] in
+            self?.opponentLeft = true
+        }
     }
 
     var botLevel: BotLevel? {
@@ -32,10 +49,17 @@ final class GameViewModel: ObservableObject {
         return nil
     }
 
+    var isOnline: Bool {
+        if case .online = mode { return true }
+        return false
+    }
+
     var isHumanTurn: Bool {
-        guard !game.isFinished else { return false }
-        guard botLevel != nil else { return true }
-        return game.sideToMove == humanColor
+        guard !game.isFinished, !opponentLeft else { return false }
+        switch mode {
+        case .twoPlayer: return true
+        case .vsBot, .online: return game.sideToMove == humanColor
+        }
     }
 
     var targets: Set<Square> {
@@ -89,16 +113,26 @@ final class GameViewModel: ObservableObject {
         perform(Move(from: pending.from, to: pending.to, promotion: kind))
     }
 
-    private func perform(_ move: Move) {
+    private func perform(_ move: Move, fromRemote: Bool = false) {
         let isCapture = game.board[move.to] != nil
         guard game.play(move) else { return }
         isCapture ? Haptics.capture() : Haptics.move()
+
+        if isOnline && !fromRemote {
+            client?.send(move: move)
+        }
 
         if game.isFinished {
             announceResult()
         } else {
             scheduleBotIfNeeded()
         }
+    }
+
+    /// 온라인 상대의 무브 적용
+    func applyRemote(_ move: Move) {
+        guard isOnline, game.sideToMove != humanColor else { return }
+        perform(move, fromRemote: true)
     }
 
     func scheduleBotIfNeeded() {
@@ -119,10 +153,10 @@ final class GameViewModel: ObservableObject {
 
     private func announceResult() {
         guard case .win(let winner, _)? = game.result else { return }
-        if botLevel == nil || winner == humanColor {
+        if case .twoPlayer = mode {
             Haptics.success()
         } else {
-            Haptics.failure()
+            winner == humanColor ? Haptics.success() : Haptics.failure()
         }
     }
 
@@ -140,6 +174,11 @@ struct GameScreen: View {
 
     init(mode: GameMode) {
         _model = StateObject(wrappedValue: GameViewModel(mode: mode))
+    }
+
+    /// 외부에서 구성한 모델로 표시 (온라인 대전)
+    init(model: GameViewModel) {
+        _model = StateObject(wrappedValue: model)
     }
 
     var body: some View {
@@ -168,6 +207,9 @@ struct GameScreen: View {
             if model.game.isFinished {
                 Theme.ink.opacity(0.25).ignoresSafeArea()
                 resultOverlay
+            } else if model.opponentLeft {
+                Theme.ink.opacity(0.25).ignoresSafeArea()
+                opponentLeftOverlay
             }
         }
         .navigationTitle(model.mode.title)
@@ -195,6 +237,8 @@ struct GameScreen: View {
             switch model.mode {
             case .vsBot: return color == model.humanColor ? "나 · 흑" : "컴퓨터 · 백"
             case .twoPlayer: return color == .black ? "흑" : "백"
+            case .online: return color == model.humanColor
+                ? "나 · \(color.korean)" : "상대 · \(color.korean)"
             }
         }()
 
@@ -262,12 +306,34 @@ struct GameScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 10) {
-                Button("한 판 더") { model.restart() }
-                    .buttonStyle(InkButtonStyle(filled: true))
+                if !model.isOnline {
+                    Button("한 판 더") { model.restart() }
+                        .buttonStyle(InkButtonStyle(filled: true))
+                }
                 Button("홈으로") { dismiss() }
-                    .buttonStyle(InkButtonStyle())
+                    .buttonStyle(InkButtonStyle(filled: model.isOnline))
             }
             .padding(.top, 8)
+        }
+        .padding(26)
+        .frame(maxWidth: 330, alignment: .leading)
+        .panelStyle()
+        .padding(24)
+        .transition(.scale.combined(with: .opacity))
+    }
+
+    private var opponentLeftOverlay: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("상대가 나갔습니다")
+                .font(.system(size: 26, weight: .black, design: .serif))
+                .foregroundStyle(Theme.ink)
+            Rectangle().fill(Theme.accent).frame(width: 44, height: 3)
+            Text("연결이 끊어져 대국을 계속할 수 없습니다.")
+                .font(.system(.subheadline))
+                .foregroundStyle(Theme.inkSoft)
+            Button("홈으로") { dismiss() }
+                .buttonStyle(InkButtonStyle(filled: true))
+                .padding(.top, 8)
         }
         .padding(26)
         .frame(maxWidth: 330, alignment: .leading)
@@ -279,7 +345,7 @@ struct GameScreen: View {
     private var resultTitle: String {
         switch model.game.result {
         case .win(let winner, _):
-            if model.botLevel != nil {
+            if model.botLevel != nil || model.isOnline {
                 return winner == model.humanColor ? "승리" : "패배"
             }
             return "\(winner.korean)의 승리"
@@ -294,6 +360,9 @@ struct GameScreen: View {
             let subject: String = {
                 if model.botLevel != nil {
                     return winner == model.humanColor ? "내가" : "컴퓨터가"
+                }
+                if model.isOnline {
+                    return winner == model.humanColor ? "내가" : "상대가"
                 }
                 return "\(winner.korean)이"
             }()

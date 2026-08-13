@@ -75,7 +75,7 @@ enum SquareUtil {
     }
 }
 
-struct Move: Hashable {
+struct Move: Hashable, Codable {
     let from: Square
     let to: Square
     var promotion: PieceKind? = nil
