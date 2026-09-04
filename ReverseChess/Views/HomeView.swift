@@ -75,7 +75,7 @@ struct HomeView: View {
                     Button {
                         botLevel = level
                     } label: {
-                        Text(level.korean)
+                        Text(level.localizedName)
                             .font(.system(.subheadline, weight: botLevel == level ? .bold : .regular))
                             .foregroundStyle(botLevel == level ? Theme.accent : Theme.inkSoft)
                             .overlay(alignment: .bottom) {
@@ -105,7 +105,7 @@ struct HomeView: View {
     }
 
     private func menuRow<Destination: View>(
-        title: String, detail: String,
+        title: LocalizedStringKey, detail: LocalizedStringKey,
         @ViewBuilder destination: @escaping () -> Destination
     ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -157,7 +157,7 @@ struct HomeView: View {
         .presentationDetents([.large])
     }
 
-    private func ruleLine(_ text: String) -> some View {
+    private func ruleLine(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Text("—")
                 .foregroundStyle(Theme.accent)

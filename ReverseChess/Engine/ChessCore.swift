@@ -6,7 +6,9 @@ enum PieceColor: String, Codable, Hashable, CaseIterable {
     case white, black
 
     var opposite: PieceColor { self == .white ? .black : .white }
-    var korean: String { self == .white ? "백" : "흑" }
+    var localizedName: String {
+        self == .white ? String(localized: "백") : String(localized: "흑")
+    }
 }
 
 enum PieceKind: String, Codable, Hashable, CaseIterable {
@@ -23,14 +25,14 @@ enum PieceKind: String, Codable, Hashable, CaseIterable {
         }
     }
 
-    var korean: String {
+    var localizedName: String {
         switch self {
-        case .pawn: return "폰"
-        case .knight: return "나이트"
-        case .bishop: return "비숍"
-        case .rook: return "룩"
-        case .queen: return "퀸"
-        case .king: return "킹"
+        case .pawn: return String(localized: "폰")
+        case .knight: return String(localized: "나이트")
+        case .bishop: return String(localized: "비숍")
+        case .rook: return String(localized: "룩")
+        case .queen: return String(localized: "퀸")
+        case .king: return String(localized: "킹")
         }
     }
 }

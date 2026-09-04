@@ -17,19 +17,19 @@ struct TutorialLesson: Identifiable {
     static let all: [TutorialLesson] = [
         TutorialLesson(
             id: 0,
-            title: "흑이 먼저 시작해요",
-            story: "리버스 체스의 목표는 정반대예요. 기물을 지키는 게 아니라, 킹만 남기고 전부 잃어야 이깁니다. 그리고 첫 수는 백이 아니라 흑의 몫이에요.",
-            goal: "아무 기물이나 움직여 첫 수를 두세요.",
-            hint: "기물을 탭하면 갈 수 있는 칸이 표시돼요.",
+            title: String(localized: "흑이 먼저 시작해요"),
+            story: String(localized: "리버스 체스의 목표는 정반대예요. 기물을 지키는 게 아니라, 킹만 남기고 전부 잃어야 이깁니다. 그리고 첫 수는 백이 아니라 흑의 몫이에요."),
+            goal: String(localized: "아무 기물이나 움직여 첫 수를 두세요."),
+            hint: String(localized: "기물을 탭하면 갈 수 있는 칸이 표시돼요."),
             board: .initial(),
             isSuccess: { _ in true }
         ),
         TutorialLesson(
             id: 1,
-            title: "잡을 수 있으면 잡아야 해요",
-            story: "잡을 수 있는 기물이 있다면 반드시 그중 하나를 잡아야 해요. 기물을 잃는 게 목표인 게임이라, 이 규칙이 승부의 핵심이 됩니다.",
-            goal: "지금 둘 수 있는 수는 단 하나뿐이에요. 찾아보세요.",
-            hint: "룩은 움직일 수 없어요. 폰으로 잡을 수 있는 것을 찾아보세요.",
+            title: String(localized: "잡을 수 있으면 잡아야 해요"),
+            story: String(localized: "잡을 수 있는 기물이 있다면 반드시 그중 하나를 잡아야 해요. 기물을 잃는 게 목표인 게임이라, 이 규칙이 승부의 핵심이 됩니다."),
+            goal: String(localized: "지금 둘 수 있는 수는 단 하나뿐이에요. 찾아보세요."),
+            hint: String(localized: "룩은 움직일 수 없어요. 폰으로 잡을 수 있는 것을 찾아보세요."),
             board: .custom([
                 ("h8", Piece(color: .black, kind: .king)),
                 ("a8", Piece(color: .black, kind: .rook)),
@@ -43,10 +43,10 @@ struct TutorialLesson: Identifiable {
         ),
         TutorialLesson(
             id: 2,
-            title: "퀸은 2칸까지만 강제예요",
-            story: "예외가 하나 있어요. 퀸의 캡처는 가로·세로·대각선 2칸 이내일 때만 강제입니다. 멀리 있는 기물은 퀸으로 '잡을 수 있어 보여도' 강제 대상이 아니에요.",
-            goal: "퀸이 아닌, 반드시 잡아야 하는 기물로 캡처하세요.",
-            hint: "퀸과 룩의 거리를 세어보세요. 폰의 대각선을 보세요.",
+            title: String(localized: "퀸은 2칸까지만 강제예요"),
+            story: String(localized: "예외가 하나 있어요. 퀸의 캡처는 가로·세로·대각선 2칸 이내일 때만 강제입니다. 멀리 있는 기물은 퀸으로 '잡을 수 있어 보여도' 강제 대상이 아니에요."),
+            goal: String(localized: "퀸이 아닌, 반드시 잡아야 하는 기물로 캡처하세요."),
+            hint: String(localized: "퀸과 룩의 거리를 세어보세요. 폰의 대각선을 보세요."),
             board: .custom([
                 ("h8", Piece(color: .black, kind: .king)),
                 ("d8", Piece(color: .black, kind: .queen)),
@@ -61,10 +61,10 @@ struct TutorialLesson: Identifiable {
         ),
         TutorialLesson(
             id: 3,
-            title: "체크가 먼저예요",
-            story: "체크 규칙은 기본 체스 그대로예요. 체크를 당하면 반드시 피해야 하고, 강제 캡처보다 체크 피하기가 우선입니다. 스스로 체크에 들어가는 수도 둘 수 없어요.",
-            goal: "체크에서 벗어나세요.",
-            hint: "룩의 시선에서 킹을 벗어나게 하세요.",
+            title: String(localized: "체크가 먼저예요"),
+            story: String(localized: "체크 규칙은 기본 체스 그대로예요. 체크를 당하면 반드시 피해야 하고, 강제 캡처보다 체크 피하기가 우선입니다. 스스로 체크에 들어가는 수도 둘 수 없어요."),
+            goal: String(localized: "체크에서 벗어나세요."),
+            hint: String(localized: "룩의 시선에서 킹을 벗어나게 하세요."),
             board: .custom([
                 ("e8", Piece(color: .black, kind: .king)),
                 ("a5", Piece(color: .black, kind: .pawn)),
@@ -75,10 +75,10 @@ struct TutorialLesson: Identifiable {
         ),
         TutorialLesson(
             id: 4,
-            title: "폰은 변신할 수 있어요",
-            story: "폰이 끝까지 전진하면 퀸·룩·비숍·나이트로 변신해요. 캐슬링과 앙파상은 없지만, 프로모션은 그대로 있습니다. 참고로 기물이 커지는 게 꼭 좋은 것만은 아니에요!",
-            goal: "폰을 끝까지 전진시켜 변신시키세요.",
-            hint: "폰을 1랭크까지 밀어보세요.",
+            title: String(localized: "폰은 변신할 수 있어요"),
+            story: String(localized: "폰이 끝까지 전진하면 퀸·룩·비숍·나이트로 변신해요. 캐슬링과 앙파상은 없지만, 프로모션은 그대로 있습니다. 참고로 기물이 커지는 게 꼭 좋은 것만은 아니에요!"),
+            goal: String(localized: "폰을 끝까지 전진시켜 변신시키세요."),
+            hint: String(localized: "폰을 1랭크까지 밀어보세요."),
             board: .custom([
                 ("h8", Piece(color: .black, kind: .king)),
                 ("b2", Piece(color: .black, kind: .pawn)),
@@ -89,10 +89,10 @@ struct TutorialLesson: Identifiable {
         ),
         TutorialLesson(
             id: 5,
-            title: "버리는 자가 이긴다",
-            story: "이제 실전 감각이에요. 상대는 잡을 수 있으면 잡아야만 하죠. 그러니 내 기물을 일부러 상대의 공격 범위에 놓으면, 상대는 어쩔 수 없이 잡아줍니다. 마지막 기물을 버려서 직접 승리해보세요!",
-            goal: "룩을 백 폰이 잡을 수밖에 없는 곳에 놓으세요.",
-            hint: "폰은 대각선으로만 잡아요. 폰의 대각선 앞에 룩을 놓아보세요.",
+            title: String(localized: "버리는 자가 이긴다"),
+            story: String(localized: "이제 실전 감각이에요. 상대는 잡을 수 있으면 잡아야만 하죠. 그러니 내 기물을 일부러 상대의 공격 범위에 놓으면, 상대는 어쩔 수 없이 잡아줍니다. 마지막 기물을 버려서 직접 승리해보세요!"),
+            goal: String(localized: "룩을 백 폰이 잡을 수밖에 없는 곳에 놓으세요."),
+            hint: String(localized: "폰은 대각선으로만 잡아요. 폰의 대각선 앞에 룩을 놓아보세요."),
             board: .custom([
                 ("a8", Piece(color: .black, kind: .king)),
                 ("h5", Piece(color: .black, kind: .rook)),
@@ -314,7 +314,8 @@ struct TutorialView: View {
                 }
 
                 if model.phase == .success {
-                    Button(model.lessonIndex + 1 < TutorialLesson.all.count ? "다음 레슨" : "완료") {
+                    Button(model.lessonIndex + 1 < TutorialLesson.all.count
+                        ? String(localized: "다음 레슨") : String(localized: "완료")) {
                         model.next()
                     }
                     .buttonStyle(InkButtonStyle(filled: true))
@@ -360,7 +361,7 @@ struct TutorialView: View {
         .padding(24)
     }
 
-    private func conceptLine(_ text: String) -> some View {
+    private func conceptLine(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Text("—").foregroundStyle(Theme.accent).fontWeight(.bold)
             Text(text)
