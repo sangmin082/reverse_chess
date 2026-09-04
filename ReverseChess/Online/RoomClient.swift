@@ -35,6 +35,7 @@ final class RoomClient: ObservableObject {
         let first: Int?
         let move: Move?
         let message: String?
+        let reason: String?
     }
 
     private struct ClientMessage: Encodable {
@@ -100,9 +101,9 @@ final class RoomClient: ObservableObject {
                         state = .opponentLeft
                         onOpponentLeft?()
                     } else if case .waitingForOpponent = state {
-                        state = .failed("서버와 연결이 끊어졌습니다.")
+                        state = .failed(String(localized: "서버와 연결이 끊어졌습니다."))
                     } else if case .connecting = state {
-                        state = .failed("서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.")
+                        state = .failed(String(localized: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요."))
                     }
                     self.task = nil
                 }
@@ -129,9 +130,21 @@ final class RoomClient: ObservableObject {
             state = .opponentLeft
             onOpponentLeft?()
         case "error":
-            state = .failed(msg.message ?? "알 수 없는 오류")
+            state = .failed(Self.localizedServerError(reason: msg.reason, fallback: msg.message))
         default:
             break
+        }
+    }
+
+    /// 서버 오류를 reason 코드 기준으로 현지화 (구버전 서버는 message 폴백)
+    private static func localizedServerError(reason: String?, fallback: String?) -> String {
+        switch reason {
+        case "room_not_found": return String(localized: "존재하지 않는 방 코드입니다.")
+        case "room_full": return String(localized: "방이 가득 찼습니다.")
+        case "already_in_room": return String(localized: "이미 방에 있습니다.")
+        case "not_started": return String(localized: "대국이 시작되지 않았습니다.")
+        case "bad_format": return String(localized: "잘못된 메시지 형식입니다.")
+        default: return fallback ?? String(localized: "알 수 없는 오류")
         }
     }
 
@@ -141,7 +154,7 @@ final class RoomClient: ObservableObject {
             let data = try JSONEncoder().encode(message)
             try await task.send(.string(String(decoding: data, as: UTF8.self)))
         } catch {
-            state = .failed("전송 실패: \(error.localizedDescription)")
+            state = .failed(String(localized: "전송 실패: \(error.localizedDescription)"))
         }
     }
 }

@@ -4,7 +4,9 @@ enum BotLevel: String, CaseIterable, Identifiable {
     case easy, hard
 
     var id: String { rawValue }
-    var korean: String { self == .easy ? "쉬움" : "어려움" }
+    var localizedName: String {
+        self == .easy ? String(localized: "쉬움") : String(localized: "어려움")
+    }
     var depth: Int { self == .easy ? 2 : 4 }
 }
 

@@ -8,9 +8,9 @@ enum GameMode: Hashable {
 
     var title: String {
         switch self {
-        case .vsBot(let level): return "컴퓨터 대전 · \(level.korean)"
-        case .twoPlayer: return "함께 하기"
-        case .online: return "온라인 대전"
+        case .vsBot(let level): return String(localized: "컴퓨터 대전 · \(level.localizedName)")
+        case .twoPlayer: return String(localized: "함께 하기")
+        case .online: return String(localized: "온라인 대전")
         }
     }
 }
@@ -224,7 +224,7 @@ struct GameScreen: View {
             titleVisibility: .visible
         ) {
             ForEach([PieceKind.queen, .rook, .bishop, .knight], id: \.self) { kind in
-                Button(kind.korean) { model.promote(to: kind) }
+                Button(kind.localizedName) { model.promote(to: kind) }
             }
         }
     }
@@ -235,10 +235,12 @@ struct GameScreen: View {
         let isTurn = !model.game.isFinished && model.game.sideToMove == color
         let name: String = {
             switch model.mode {
-            case .vsBot: return color == model.humanColor ? "나 · 흑" : "컴퓨터 · 백"
-            case .twoPlayer: return color == .black ? "흑" : "백"
+            case .vsBot: return color == model.humanColor
+                ? String(localized: "나 · 흑") : String(localized: "컴퓨터 · 백")
+            case .twoPlayer: return color.localizedName
             case .online: return color == model.humanColor
-                ? "나 · \(color.korean)" : "상대 · \(color.korean)"
+                ? String(localized: "나 · \(color.localizedName)")
+                : String(localized: "상대 · \(color.localizedName)")
             }
         }()
 
@@ -287,7 +289,7 @@ struct GameScreen: View {
         .animation(.easeInOut(duration: 0.2), value: model.game.moveCount)
     }
 
-    private func bannerLabel(_ text: String) -> some View {
+    private func bannerLabel(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(.footnote, weight: .semibold))
             .foregroundStyle(Theme.accent)
@@ -346,32 +348,35 @@ struct GameScreen: View {
         switch model.game.result {
         case .win(let winner, _):
             if model.botLevel != nil || model.isOnline {
-                return winner == model.humanColor ? "승리" : "패배"
+                return winner == model.humanColor
+                    ? String(localized: "승리") : String(localized: "패배")
             }
-            return "\(winner.korean)의 승리"
-        case .draw: return "무승부"
+            return String(localized: "\(winner.localizedName)의 승리")
+        case .draw: return String(localized: "무승부")
         case nil: return ""
         }
     }
 
     private var resultDetail: String {
         switch model.game.result {
-        case .win(let winner, let reason):
-            let subject: String = {
-                if model.botLevel != nil {
-                    return winner == model.humanColor ? "내가" : "컴퓨터가"
-                }
-                if model.isOnline {
-                    return winner == model.humanColor ? "내가" : "상대가"
-                }
-                return "\(winner.korean)이"
-            }()
+        case .win(_, let reason):
             switch reason {
-            case .onlyKingLeft: return "\(subject) 킹만 남기고 모든 기물을 버렸습니다."
-            case .checkmated: return "\(subject) 체크메이트에 몰렸습니다. 이 게임에서는 그게 승리입니다."
-            case .loneIsland: return "외딴 섬 — \(subject) 킹 말고는 움직일 기물이 없습니다."
+            case .onlyKingLeft:
+                return String(localized: "킹만 남기고 모든 기물을 버려서 승리했습니다.")
+            case .checkmated:
+                return String(localized: "체크메이트를 당하면 승리하는 게임 — 그렇게 끝났습니다.")
+            case .loneIsland:
+                return String(localized: "외딴 섬 — 킹 말고는 움직일 기물이 없어서 승리했습니다.")
             }
-        case .draw(let reason): return "\(reason.korean)에 의한 무승부입니다."
+        case .draw(let reason):
+            switch reason {
+            case .stalemate:
+                return String(localized: "스테일메이트로 무승부입니다.")
+            case .threefoldRepetition:
+                return String(localized: "같은 위치가 세 번 반복되어 무승부입니다.")
+            case .fiftyMoveRule:
+                return String(localized: "50수 동안 캡처와 폰 이동이 없어 무승부입니다.")
+            }
         case nil: return ""
         }
     }

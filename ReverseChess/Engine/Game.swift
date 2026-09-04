@@ -13,11 +13,11 @@ enum GameResult: Equatable {
         /// 체크가 아닌데 움직일 수 있는 기물이 킹뿐 (다른 기물은 남아 있음)
         case loneIsland
 
-        var korean: String {
+        var localizedName: String {
             switch self {
-            case .onlyKingLeft: return "왕만 남음"
-            case .checkmated: return "체크메이트"
-            case .loneIsland: return "외딴 섬"
+            case .onlyKingLeft: return String(localized: "왕만 남음")
+            case .checkmated: return String(localized: "체크메이트")
+            case .loneIsland: return String(localized: "외딴 섬")
             }
         }
     }
@@ -27,11 +27,11 @@ enum GameResult: Equatable {
         case threefoldRepetition
         case fiftyMoveRule
 
-        var korean: String {
+        var localizedName: String {
             switch self {
-            case .stalemate: return "스테일메이트"
-            case .threefoldRepetition: return "3회 동형"
-            case .fiftyMoveRule: return "50수 규칙"
+            case .stalemate: return String(localized: "스테일메이트")
+            case .threefoldRepetition: return String(localized: "3회 동형")
+            case .fiftyMoveRule: return String(localized: "50수 규칙")
             }
         }
     }

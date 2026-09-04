@@ -72,12 +72,12 @@ wss.on('connection', (ws) => {
     try {
       msg = JSON.parse(raw.toString());
     } catch {
-      return send(ws, { type: 'error', message: '잘못된 메시지 형식입니다.' });
+      return send(ws, { type: 'error', reason: 'bad_format', message: '잘못된 메시지 형식입니다.' });
     }
 
     switch (msg.type) {
       case 'create': {
-        if (ws.roomCode) return send(ws, { type: 'error', message: '이미 방에 있습니다.' });
+        if (ws.roomCode) return send(ws, { type: 'error', reason: 'already_in_room', message: '이미 방에 있습니다.' });
         const code = generateCode();
         rooms.set(code, { sockets: [ws, null], started: false });
         ws.roomCode = code;
@@ -86,11 +86,11 @@ wss.on('connection', (ws) => {
       }
 
       case 'join': {
-        if (ws.roomCode) return send(ws, { type: 'error', message: '이미 방에 있습니다.' });
+        if (ws.roomCode) return send(ws, { type: 'error', reason: 'already_in_room', message: '이미 방에 있습니다.' });
         const code = String(msg.code || '').toUpperCase().trim();
         const room = rooms.get(code);
-        if (!room) return send(ws, { type: 'error', message: '존재하지 않는 방 코드입니다.' });
-        if (room.sockets[1]) return send(ws, { type: 'error', message: '방이 가득 찼습니다.' });
+        if (!room) return send(ws, { type: 'error', reason: 'room_not_found', message: '존재하지 않는 방 코드입니다.' });
+        if (room.sockets[1]) return send(ws, { type: 'error', reason: 'room_full', message: '방이 가득 찼습니다.' });
         room.sockets[1] = ws;
         room.started = true;
         ws.roomCode = code;
@@ -104,7 +104,7 @@ wss.on('connection', (ws) => {
       case 'move': {
         const room = rooms.get(ws.roomCode);
         if (!room || !room.started) {
-          return send(ws, { type: 'error', message: '대국이 시작되지 않았습니다.' });
+          return send(ws, { type: 'error', reason: 'not_started', message: '대국이 시작되지 않았습니다.' });
         }
         send(opponentOf(room, ws), { type: 'move', move: msg.move });
         break;

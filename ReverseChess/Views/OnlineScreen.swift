@@ -140,7 +140,7 @@ struct OnlineScreen: View {
             .padding(.vertical, 22)
             .panelStyle()
 
-            ShareLink(item: "리버스 체스에서 한 판 하자! 방코드: \(code)") {
+            ShareLink(item: String(localized: "리버스 체스에서 한 판 하자! 방코드: \(code)")) {
                 Text("코드 공유하기")
                     .font(.system(.body, weight: .semibold))
                     .padding(.vertical, 12)
@@ -161,7 +161,7 @@ struct OnlineScreen: View {
         }
     }
 
-    private func statusView(title: String, detail: String) -> some View {
+    private func statusView(title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
                 .font(.system(size: 30, weight: .black, design: .serif))
